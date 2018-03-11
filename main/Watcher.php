@@ -26,17 +26,20 @@ class Watcher {
         $extra = $package->getExtra();
         $source = realpath($extra['witpact-dist-dir']);
 
-        // 获取命令参数并设置
+        // 获取命令参数并设置安装
         $options = self::parseOptions($event->getArguments());
         $interval = $options['interval'] ?? 1;
-        $target = realpath($options['target'] ?? self::getTarget($package));
+        $target = $options['target'] ?? self::getTarget($package);
+        if (!is_dir($target)) mkdir($target, 0777, true);
+        $target = realpath($target);
+        $filesystem = new Filesystem;
+        $filesystem->copy($source, $target);
 
         // 获取初始状态并监听
         $io->write('source: '.$source);
         $io->write('target: '.$target);
-        $old = self::signFolder($source);
-        $filesystem = new Filesystem;
         $start = strlen($source);
+        $old = self::signFolder($source);
         while (true) {
             $now = self::signFolder($source);
 
