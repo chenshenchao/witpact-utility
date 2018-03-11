@@ -23,21 +23,24 @@ class Watcher {
         $io = $event->getIO();
         $composer = $event->getComposer();
         $package = $composer->getPackage();
-        $source = $package->getExtra()['witpact-dist-dir'];
-        $source = realpath($source);
+        $extra = $package->getExtra();
+        $source = realpath($extra['witpact-dist-dir']);
 
         // 获取命令参数并设置
         $options = self::parseOptions($event->getArguments());
-        $interval = $options['--interval'] ?? 3;
-        $target = $options['--target'] ?? self::getTarget($package);
-        $target = realpath($target);
-        $old = self::signFolder($source);
-        $filesystem = new Filesystem;
+        $interval = $options['interval'] ?? 1;
+        $target = realpath($options['target'] ?? self::getTarget($package));
+
+        // 获取初始状态并监听
         $io->write('source: '.$source);
         $io->write('target: '.$target);
+        $old = self::signFolder($source);
+        $filesystem = new Filesystem;
         $start = strlen($source);
         while (true) {
             $now = self::signFolder($source);
+
+            // 比对并同步
             foreach (array_diff_assoc($now, $old) as $path => $time) {
                 $aim = $target.substr($path, $start);
                 $io->write(date('[Y-m-d h:i:s]', $time).$path);
@@ -77,7 +80,7 @@ class Watcher {
         $result = [];
         foreach ($argument as $option) {
             $i = explode('=', $option);
-            $result[$i[0]] = $i[1] ?? null;
+            $result[ltrim($i[0], '-')] = $i[1] ?? null;
         }
         return $result;
     }
@@ -88,9 +91,9 @@ class Watcher {
      * @param $package: 包接口。
      */
     public static function getTarget($package) {
-        $name = $package->getName();
-        $type = $package->getType();
         $extra = $package->getExtra();
+        $type = $package->getType();
+        $name = $extra['witpact-alias'] ?? $package->getName();
         foreach ($extra['installer-paths'] as $path => $names) {
             if (in_array(self::MAP[$type], $names)) {
                 return str_replace('{$name}', $name, $path);

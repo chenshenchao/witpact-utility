@@ -19,8 +19,15 @@
             "Test\\": "test"
         }
     },
-    "require": {},
+    "require": {
+        "php": "^7"
+    },
     "require-dev": {
         "phpunit/phpunit": "^7.0"
+    },
+    "scripts": {
+        "test": [
+            "phpunit --bootstrap vendor/autoload.php --testdox test"
+        ]
     }
 }
