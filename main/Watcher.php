@@ -36,6 +36,7 @@ class Watcher {
         $filesystem->copy($source, $target);
 
         // 获取初始状态并监听
+        $io->write('package: '.$package->getPrettyName());
         $io->write('source: '.$source);
         $io->write('target: '.$target);
         $start = strlen($source);
@@ -46,7 +47,7 @@ class Watcher {
             // 比对并同步
             foreach (array_diff_assoc($now, $old) as $path => $time) {
                 $aim = $target.substr($path, $start);
-                $io->write(date('[Y-m-d h:i:s]', $time).$path);
+                $io->write(date('[Y-m-d H:i:s]', $time).$path);
                 $io->write('=> '.$aim);
                 $filesystem->copy($path, $aim);
             }
@@ -96,7 +97,7 @@ class Watcher {
     public static function getTarget($package) {
         $extra = $package->getExtra();
         $type = $package->getType();
-        $name = $extra['witpact-alias'] ?? $package->getName();
+        $name = $extra['witpact-alias'] ?? explode('/', $package->getName())[1];
         foreach ($extra['installer-paths'] as $path => $names) {
             if (in_array(self::MAP[$type], $names)) {
                 return str_replace('{$name}', $name, $path);
